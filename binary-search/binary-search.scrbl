@@ -10,6 +10,9 @@
 
 @defmodule[binary-search]
 
+This module provides functions for performing binary search where the search
+space is indexed by exact integers.
+
 @defproc[(binary-search [data (or/c (-> exact-integer? any/c) vector?)]
                         [goal any/c]
                         [start exact-integer? 0]
@@ -27,19 +30,12 @@ The input, @racket[data] from @racket[start] to @racket[end], must be sorted in
 ascending order according to @racket[compare]. If @racket[compare] is
 @racket[#f], then standard numeric order is used.
 
-If @racket[end] is @racket[#f] and @racket[data] is a vector, then the end index
-is @racket[(vector-length data)]. If @racket[end] is @racket[#f] and
-@racket[data] is a procedure, then the end index is found by repeatedly doubling
-the search range until it contains the correct result. If the doubling phase
-does not succeed within a certain number of steps (currently 100), an error is
-raised.
-
 If the result @racket[_index] is not @racket[#f], then it is an exact integer
 satisfying @racket[(<= start _index)] and @racket[(< _index end)]. The result
 @racket[_index] is determined by the @racket[_mode] as follows:
 @itemlist[
 
-@item{@racket['any/=] -- Returns any @racket[_index] in the given range such
+@item{@racket['any/=] --- Returns any @racket[_index] in the given range such
 that @racket[(data _index)] is equal to @racket[goal] according to
 @racket[compare]. The result is not necessarily the least or greatest such
 index, but rather the first such index found during the binary search.}
@@ -48,17 +44,13 @@ index, but rather the first such index found during the binary search.}
 @racket[_index], respectively, such that @racket[(data _index)] is equal to
 @racket[goal].}
 
-@item{@racket['greatest/<] --- Returns the greatest @racket[_index] such that
-@racket[(data _index)] is strictly greater than @racket[goal].}
+@item{@racket['greatest/<], @racket['greatest/<=] --- Returns the greatest
+@racket[_index] such that @racket[(data _index)] is strictly less than
+@racket[goal] or less than or equal to @racket[goal], respectively.}
 
-@item{@racket['greatest/<=] --- Returns the greatest @racket[_index] such that
-@racket[(data _index)] is greater than or equal to @racket[goal].}
-
-@item{@racket['least/>] --- Returns the least @racket[_index] such that
-@racket[(data _index)] is strictly less than @racket[goal].}
-
-@item{@racket['least/>=] --- Returns the least @racket[_index] such that
-@racket[(data _index)] is less than or equal to @racket[goal].}
+@item{@racket['least/>], @racket['least/>=] --- Returns the least
+@racket[_index] such that @racket[(data _index)] is strictly greater than
+@racket[goal] or greater than or equal to @racket[goal], respectively.}
 
 ]
 
@@ -78,6 +70,16 @@ index, but rather the first such index found during the binary search.}
 (show-split data (binary-search data 4 #:mode 'least/>=))
 (binary-search data 2 #:mode 'least/=)
 (show-split data (binary-search data 2 #:mode 'least/>))
+]
+
+If @racket[end] is @racket[#f] and @racket[data] is a vector, then the end index
+is @racket[(vector-length data)]. If @racket[end] is @racket[#f] and
+@racket[data] is a procedure, then the end index is found by repeatedly doubling
+the search range until it contains the correct result. If the doubling phase
+does not succeed within a certain number of steps (currently 100), an error is
+raised.
+
+@examples[#:eval the-eval #:label #f
 (define (floor-div4 n) (floor (/ n 4)))
 (binary-search floor-div4 5 #:mode 'least/=)
 (binary-search floor-div4 5 #:mode 'greatest/=)
