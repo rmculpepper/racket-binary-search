@@ -13,43 +13,62 @@
 ;; (Cmp X) = (X X -> (U '= '< '>))  or  #f if X is Real
 
 ;; binary-search : (Data X) X Integer Integer [(Cmp X) Symbol] -> (U Integer #f)
-(define (binary-search f goal
-                       [start 0]
-                       [end (and (vector? f) (vector-length f))]
-                       #:compare [cmp #f]
-                       #:mode [mode 'any/=])
+(define (binary-search f goal [start 0] [end #f] #:compare [cmp #f] #:mode [mode 'any/=])
   (define who 'binary-search)
   (check-args who f goal start end cmp)
-  (binary-search* f goal start end cmp mode who))
+  (let ([end (or end (find-end who f goal start cmp mode))])
+    (binary-search* f goal start end cmp mode who)))
 
 ;; binary-search-all : ... -> (values Integer Integer)
-(define (binary-search-all f goal
-                           [start 0]
-                           [end (and (vector? f) (vector-length f))]
-                           #:compare [cmp #f])
+(define (binary-search-all f goal [start 0] [end #f] #:compare [cmp #f])
   (define who 'binary-search-all)
   (check-args who f goal start end cmp)
-  (binary-search-all* f goal start end cmp 'ab who))
+  (let ([end (or end (find-end who f goal start cmp 'greatest/=))])
+    (binary-search-all* f goal start end cmp 'ab who)))
 
 ;; ----------------------------------------
+
+(define (find-end who f goal start cmp mode)
+  (if (vector? f) (vector-length f) (find-end/function who f goal start cmp mode)))
+
+(define MAX-ITERS 100)
+(define (find-end/function who f goal start cmp mode)
+  (let loop ([diff 1] [iters 0])
+    (unless (< iters MAX-ITERS)
+      (error who "failed to find end index~a\n  function: ~e\n  start: ~e\n  iterations: ~e"
+             ";\n stopped after iteration limit reached"
+             f start iters))
+    (define end (+ start diff))
+    (define flast (f (sub1 end)))
+    (define cmp-result (compare cmp flast goal))
+    (case cmp-result
+      [(=) (case mode
+             [(greatest/= greatest/<= least/>)
+              (loop (+ diff diff) (add1 iters))]
+             [else end])]
+      [(<) (loop (+ diff diff) (add1 iters))]
+      [(>) end]
+      [else (compare-error who cmp cmp-result flast goal)])))
 
 (define (check-args who f goal start end cmp)
   (unless (or (vector? f) (and (procedure? f) (procedure-arity-includes? f 1)))
     (raise-argument-error who "(or/c vector? (procedure-arity-includes/c 1))" f))
   (unless (exact-integer? start)
     (raise-argument-error who "exact-integer?" start))
-  (unless (exact-integer? end)
-    (raise-argument-error who "exact-integer?" end))
+  (unless (or (eq? end #f) (exact-integer? end))
+    (raise-argument-error who "(or/c exact-integer? #f)" end))
   (unless (or (eq? cmp #f) (and (procedure? cmp) (procedure-arity-includes? cmp 2)))
     (raise-argument-error who "(or/c #f (procedure-arity-includes/c 2))" cmp))
   (cond [(vector? f)
          (unless (and (<= 0 start) (< start (vector-length f)))
            (raise-range-error who "vector" "start " start f 0 (sub1 (vector-length f))))
-         (unless (<= start end (vector-length f))
-           (raise-range-error who "vector" "end " end f start (sub1 (vector-length f))))]
+         (when end
+           (unless (<= start end (vector-length f))
+             (raise-range-error who "vector" "end " end f start (sub1 (vector-length f)))))]
         [else
-         (unless (<= start end)
-           (raise-arguments-error who "bad start and end indexes" "start" start "end" end))]))
+         (when end
+           (unless (<= start end)
+             (raise-arguments-error who "bad start and end indexes" "start" start "end" end)))]))
 
 (define (binary-search* f goal start end cmp mode who)
   (case mode
@@ -117,15 +136,11 @@
 (module+ unchecked
   (provide binary-search
            binary-search-all)
-  (define (binary-search f goal
-                         [start 0]
-                         [end (and (vector? f) (vector-length f))]
-                         #:compare [cmp #f]
-                         #:mode [mode 'any/=])
-    (binary-search* f goal start end cmp mode 'binary-search))
-  (define (binary-search-all f goal
-                             [start 0]
-                             [end (and (vector? f) (vector-length f))]
-                             #:compare [cmp #f])
-    (define who 'unchecked-binary-search-all)
-    (binary-search-all* f goal start end cmp 'ab 'binary-search-all)))
+  (define (binary-search f goal [start 0] [end #f] #:compare [cmp #f] #:mode [mode 'any/=])
+    (define who 'binary-search)
+    (let ([end (or end (find-end who f goal start cmp mode))])
+      (binary-search* f goal start end cmp mode who)))
+  (define (binary-search-all f goal [start 0] [end #f] #:compare [cmp #f])
+    (define who 'binary-search-all)
+    (let ([end (or end (find-end who f goal start cmp 'greatest/=))])
+      (binary-search-all* f goal start end cmp 'ab who))))

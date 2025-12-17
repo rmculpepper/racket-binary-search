@@ -13,7 +13,7 @@
 @defproc[(binary-search [data (or/c (-> exact-integer? any/c) vector?)]
                         [goal any/c]
                         [start exact-integer? 0]
-                        [end exact-integer? (and (vector? data) (vector-length data))]
+                        [end (or/c exact-integer? #f) #f]
                         [#:compare compare (or/c #f (-> any/c any/c (or/c '= '< '>))) #f]
                         [#:mode mode symbol? 'any/=])
          (or/c exact-integer? #f)]{
@@ -25,8 +25,14 @@ index exists, @racket[#f] is returned.
 
 The input, @racket[data] from @racket[start] to @racket[end], must be sorted in
 ascending order according to @racket[compare]. If @racket[compare] is
-@racket[#f], then standard numeric order is used. (Note that @racket[+nan.0] is
-incomparable with all numbers, including itself.)
+@racket[#f], then standard numeric order is used.
+
+If @racket[end] is @racket[#f] and @racket[data] is a vector, then the end index
+is @racket[(vector-length data)]. If @racket[end] is @racket[#f] and
+@racket[data] is a procedure, then the end index is found by repeatedly doubling
+the search range until it contains the correct result. If the doubling phase
+does not succeed within a certain number of steps (currently 100), an error is
+raised.
 
 If the result @racket[_index] is not @racket[#f], then it is an exact integer
 satisfying @racket[(<= start _index)] and @racket[(< _index end)]. The result
@@ -72,6 +78,10 @@ index, but rather the first such index found during the binary search.}
 (show-split data (binary-search data 4 #:mode 'least/>=))
 (binary-search data 2 #:mode 'least/=)
 (show-split data (binary-search data 2 #:mode 'least/>))
+(define (floor-div4 n) (floor (/ n 4)))
+(binary-search floor-div4 5 #:mode 'least/=)
+(binary-search floor-div4 5 #:mode 'greatest/=)
+(binary-search floor-div4 5 #:mode 'least/>)
 ]}
 
 
@@ -87,8 +97,7 @@ to @racket[end] (exclusive) whose values are equal to @racket[goal].
 
 The input, @racket[data] from @racket[start] to @racket[end], must be sorted in
 ascending order according to @racket[compare].  If @racket[compare] is
-@racket[#f], then standard numeric order is used. (Note that @racket[+nan.0] is
-incomparable with all numbers, including itself.)
+@racket[#f], then standard numeric order is used.
 
 The function returns @racket[(values _starteq _endeq)] such that
 the following properties hold:
@@ -132,6 +141,8 @@ ordering for that section of @racket[data], but it may not preserve ordering on
 (show-split2 data (binary-search-all data 5))
 (show-split2 data (binary-search-all data 10))
 (show-split2 data (binary-search-all data 10 0 4))
+(define (floor-div4 n) (floor (/ n 4)))
+(binary-search-all floor-div4 5)
 ]}
 
 @; ----------------------------------------

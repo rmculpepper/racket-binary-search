@@ -67,3 +67,10 @@
 
 ;; TODO:
 ;; - test cmp
+
+
+(test-case "find end"
+  (define (floor-sqrt n) (floor (sqrt n)))
+  (check-equal? (binary-search floor-sqrt 5 #:mode 'greatest/<) 24)
+  (check-equal? (binary-search floor-sqrt 5 #:mode 'greatest/=) 35)
+  (check-equal? (binary-search floor-sqrt 5 #:mode 'least/>) 36))
