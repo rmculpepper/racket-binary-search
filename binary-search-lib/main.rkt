@@ -60,15 +60,20 @@
   (unless (or (eq? cmp #f) (and (procedure? cmp) (procedure-arity-includes? cmp 2)))
     (raise-argument-error who "(or/c #f (procedure-arity-includes/c 2))" cmp))
   (cond [(vector? f)
-         (unless (and (<= 0 start) (< start (vector-length f)))
-           (raise-range-error who "vector" "start " start f 0 (sub1 (vector-length f))))
+         (unless (<= 0 start (vector-length f))
+           (raise-range-error who "vector" "start " start f 0 (vector-length f)))
          (when end
            (unless (<= start end (vector-length f))
-             (raise-range-error who "vector" "end " end f start (sub1 (vector-length f)))))]
+             (raise-range-error who "vector" "end " end f start (vector-length f))))]
         [else
          (when end
            (unless (<= start end)
-             (raise-arguments-error who "bad start and end indexes" "start" start "end" end)))]))
+             (error who (string-append
+                         "end index is out of range"
+                         "\n  end index: ~s"
+                         "\n  valid range: [~s, +inf.0)"
+                         "\n  data: ~e")
+                    end start f)))]))
 
 (define (binary-search* f goal start end cmp mode who)
   (case mode
