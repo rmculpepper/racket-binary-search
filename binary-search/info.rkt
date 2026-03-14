@@ -9,10 +9,10 @@
 (define collection "binary-search")
 (define deps
   '("base"
+    "rackunit-lib"
     "binary-search-lib"))
 (define build-deps
   '("racket-doc"
-    "rackunit-lib"
     "scribble-lib"))
 (define implies '("binary-search-lib"))
 (define pkg-authors '(ryanc))
