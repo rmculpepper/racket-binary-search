@@ -7,6 +7,7 @@
 ;; pkg info
 
 (define collection "binary-search")
+(define blurb "Binary search over integer-indexed search spaces (implementation only)")
 (define deps
   '("base"))
 (define pkg-authors '(ryanc))

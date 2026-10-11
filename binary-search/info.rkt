@@ -7,6 +7,7 @@
 ;; pkg info
 
 (define collection "binary-search")
+(define blurb "Binary search over integer-indexed search spaces (documentation and tests)")
 (define deps
   '("base"
     "rackunit-lib"
