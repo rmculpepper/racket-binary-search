@@ -7,6 +7,7 @@
 ;; pkg info
 
 (define collection "binary-search")
+(define blurb "Binary search over ordered sequences (documentation only)")
 (define deps
   '("base"
     "rackunit-lib"

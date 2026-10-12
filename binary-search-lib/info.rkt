@@ -7,6 +7,7 @@
 ;; pkg info
 
 (define collection "binary-search")
+(define blurb "Binary search over ordered sequences (implementation only)")
 (define deps
   '("base"))
 (define pkg-authors '(ryanc))
